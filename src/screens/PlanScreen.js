@@ -19,7 +19,7 @@ import { ref, onValue, set, push, update, remove } from 'firebase/database';
 
 import { useAuth } from '../context/AuthContext';
 import { database } from '../../firebaseConfig';
-
+import ScreenContainer from '../components/ScreenContainer';
 const COLORS = {
   background: '#FCF4EC',
   surface: '#FFFDFB',
@@ -197,9 +197,11 @@ export default function PlanScreen() {
         <Text style={styles.loadingText}>Ładujemy Twój plan...</Text>
       </View>
     );
+
   }
 
   return (
+            <ScreenContainer>
     <View style={styles.screen}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
@@ -482,6 +484,7 @@ export default function PlanScreen() {
         </KeyboardAvoidingView>
       </Modal>
     </View>
+    </ScreenContainer>
   );
 }
 
