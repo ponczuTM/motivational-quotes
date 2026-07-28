@@ -1,6 +1,6 @@
 // src/screens/PlanScreen.js
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,14 @@ import {
   Modal,
   Platform,
   StatusBar,
+  ActivityIndicator,
+  KeyboardAvoidingView,
 } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { ref, onValue, set, push, update, remove } from 'firebase/database';
+
+import { useAuth } from '../context/AuthContext';
+import { database } from '../../firebaseConfig';
 
 const COLORS = {
   background: '#FCF4EC',
@@ -49,10 +55,85 @@ const INITIAL_STEPS = [
   },
 ];
 
+const getTodayDate = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
 export default function PlanScreen() {
-  const [steps, setSteps] = useState(INITIAL_STEPS);
+  const { user } = useAuth();
+
+  const [steps, setSteps] = useState([]);
   const [newStepText, setNewStepText] = useState('');
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Nasłuchujemy na kroki planu użytkownika w Firebase Realtime Database
+  useEffect(() => {
+    if (!user?.uid) {
+      setSteps([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    const stepsRef = ref(database, `users/${user.uid}/plan/steps`);
+
+    const unsubscribe = onValue(stepsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const stepsData = snapshot.val();
+        const stepsList = Object.entries(stepsData)
+          .map(([id, value]) => ({ id, ...value }))
+          .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
+
+        setSteps(stepsList);
+        setIsLoading(false);
+      } else {
+        // Brak zapisanych kroków - zapisujemy domyślne, żeby użytkownik miał punkt startowy
+        const defaultStepsData = {};
+        INITIAL_STEPS.forEach((step) => {
+          defaultStepsData[step.id] = {
+            text: step.text,
+            completed: false,
+            createdAt: new Date().toISOString(),
+          };
+        });
+
+        set(stepsRef, defaultStepsData);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Za każdym razem, gdy zmieni się stan kroków, zapisujemy migawkę dzienną
+  // (data + % wykonanych zadań), żeby można było później budować statystyki
+  useEffect(() => {
+    if (!user?.uid || isLoading) {
+      return;
+    }
+
+    const totalCount = steps.length;
+    const completedCount = steps.filter((step) => step.completed).length;
+    const percent =
+      totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+    const today = getTodayDate();
+
+    const historyRef = ref(database, `users/${user.uid}/plan/history/${today}`);
+
+    set(historyRef, {
+      date: today,
+      completedCount,
+      totalCount,
+      percent,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [steps, user?.uid, isLoading]);
 
   const completedSteps = useMemo(
     () => steps.filter((step) => step.completed).length,
@@ -63,41 +144,60 @@ export default function PlanScreen() {
     steps.length > 0 ? Math.round((completedSteps / steps.length) * 100) : 0;
 
   const toggleStep = (id) => {
-    setSteps((currentSteps) =>
-      currentSteps.map((step) =>
-        step.id === id
-          ? {
-              ...step,
-              completed: !step.completed,
-            }
-          : step
-      )
-    );
+    if (!user?.uid) {
+      return;
+    }
+
+    const step = steps.find((currentStep) => currentStep.id === id);
+
+    if (!step) {
+      return;
+    }
+
+    const stepRef = ref(database, `users/${user.uid}/plan/steps/${id}`);
+    update(stepRef, { completed: !step.completed });
   };
 
   const removeStep = (id) => {
-    setSteps((currentSteps) =>
-      currentSteps.filter((step) => step.id !== id)
-    );
+    if (!user?.uid) {
+      return;
+    }
+
+    const stepRef = ref(database, `users/${user.uid}/plan/steps/${id}`);
+    remove(stepRef);
   };
 
   const addStep = () => {
     const trimmedText = newStepText.trim();
 
-    if (!trimmedText) {
+    if (!trimmedText || !user?.uid) {
       return;
     }
 
-    const newStep = {
-      id: `step-${Date.now()}`,
+    const stepsRef = ref(database, `users/${user.uid}/plan/steps`);
+    const newStepRef = push(stepsRef);
+
+    set(newStepRef, {
       text: trimmedText,
       completed: false,
-    };
+      createdAt: new Date().toISOString(),
+    });
 
-    setSteps((currentSteps) => [...currentSteps, newStep]);
     setNewStepText('');
     setIsAddModalVisible(false);
   };
+
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+
+        <ActivityIndicator size="large" color={COLORS.coral} />
+
+        <Text style={styles.loadingText}>Ładujemy Twój plan...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -306,7 +406,10 @@ export default function PlanScreen() {
         animationType="fade"
         onRequestClose={() => setIsAddModalVisible(false)}
       >
-        <View style={styles.modalBackdrop}>
+        <KeyboardAvoidingView
+          style={styles.modalBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={() => setIsAddModalVisible(false)}
@@ -376,7 +479,7 @@ export default function PlanScreen() {
               <Text style={styles.modalAddButtonText}>Dodaj do planu</Text>
             </Pressable>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -396,6 +499,20 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 20 : 14,
     paddingHorizontal: 20,
     paddingBottom: 42,
+  },
+
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.background,
+  },
+
+  loadingText: {
+    marginTop: 16,
+    color: COLORS.textSecondary,
+    fontSize: 15,
+    textAlign: 'center',
   },
 
   header: {
@@ -704,17 +821,18 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     backgroundColor: 'rgba(31, 28, 25, 0.53)',
   },
 
   modalCard: {
     width: '100%',
-    borderTopLeftRadius: 29,
-    borderTopRightRadius: 29,
+    marginTop:
+      (Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0) + 24,
+    borderRadius: 29,
     backgroundColor: COLORS.surface,
     paddingHorizontal: 22,
-    paddingBottom: Platform.OS === 'ios' ? 36 : 25,
+    paddingBottom: 28,
   },
 
   modalHandle: {
