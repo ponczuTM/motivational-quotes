@@ -16,6 +16,7 @@ import {
   Modal,
 } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useNavigation } from '@react-navigation/native';
 import { ref, get } from 'firebase/database';
 
 import { useAuth } from '../context/AuthContext';
@@ -51,6 +52,7 @@ const FALLBACK_IMAGE =
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const navigation = useNavigation();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -497,7 +499,7 @@ export default function HomeScreen() {
             </View>
           ) : (
             <Pressable
-              onPress={() => {}}
+              onPress={() => navigation.navigate('Subskrypcja')}
               style={({ pressed }) => [
                 styles.premiumButton,
                 pressed && styles.buttonPressed,

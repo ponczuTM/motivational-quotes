@@ -35,6 +35,7 @@ function TabBarIcon({ routeName, focused, color, size }) {
     Pomoc: focused ? 'hand-heart' : 'hand-heart-outline',
     'Mój plan': focused ? 'clipboard-text' : 'clipboard-text-outline',
     Profil: focused ? 'account' : 'account-outline',
+    Subskrypcja: focused ? 'diamond-stone' : 'diamond-outline',
   };
 
   return (
@@ -112,8 +113,7 @@ function AppTabs() {
         name="Subskrypcja"
         component={SubscriptionScreen}
         options={{
-          tabBarButton: () => null,
-          tabBarItemStyle: { display: 'none' },
+          tabBarLabel: 'Premium',
         }}
       />
     </Tab.Navigator>
