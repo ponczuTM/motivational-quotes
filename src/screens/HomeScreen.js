@@ -20,6 +20,7 @@ import { ref, get } from 'firebase/database';
 
 import { useAuth } from '../context/AuthContext';
 import { database } from '../../firebaseConfig';
+import ScreenContainer from '../components/ScreenContainer';
 
 const { width } = Dimensions.get('window');
 
@@ -258,7 +259,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <ScreenContainer>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <ScrollView
@@ -675,7 +676,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </ScreenContainer>
   );
 }
 

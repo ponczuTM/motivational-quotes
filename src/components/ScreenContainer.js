@@ -13,8 +13,8 @@ export default function ScreenContainer({ children, style }) {
       style={[
         styles.container,
         {
-          paddingTop: insets.top + 14,
-          paddingBottom: tabBarHeight + insets.bottom + 28,
+          paddingTop: insets.top - 6,
+        //   paddingBottom: tabBarHeight + insets.bottom + 28,
         },
         style,
       ]}

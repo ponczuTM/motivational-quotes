@@ -13,6 +13,7 @@ import {
   StatusBar,
 } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import ScreenContainer from '../components/ScreenContainer';
 
 const COLORS = {
   background: '#FCF4EC',
@@ -86,7 +87,7 @@ export default function HelpScreen() {
   };
 
   return (
-    <View style={styles.screen}>
+    <ScreenContainer>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <ScrollView
@@ -300,7 +301,7 @@ export default function HelpScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </ScreenContainer>
   );
 }
 
