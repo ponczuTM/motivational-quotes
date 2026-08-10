@@ -1,6 +1,6 @@
 // App.js
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
@@ -8,6 +8,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { scheduleDailyMotivationNotification } from './src/utils/notifications';
 
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -155,6 +156,10 @@ function RootNavigator() {
 }
 
 export default function App() {
+  useEffect(() => {
+    scheduleDailyMotivationNotification();
+  }, []);
+
   return (
     <AuthProvider>
       <RootNavigator />

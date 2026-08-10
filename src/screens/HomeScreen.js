@@ -22,6 +22,7 @@ import { ref, get } from 'firebase/database';
 import { useAuth } from '../context/AuthContext';
 import { database } from '../../firebaseConfig';
 import ScreenContainer from '../components/ScreenContainer';
+import useActiveContentDate from '../hooks/useActiveContentDate';
 
 const { width } = Dimensions.get('window');
 
@@ -63,59 +64,56 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
 
-  const getTodayDate = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
+  // Przed 11:11 pokazujemy treść wczorajszą, od 11:11 - dzisiejszą.
+  // Hook sam przełącza tę wartość dokładnie o 11:11, bez restartu appki.
+  const activeDateKey = useActiveContentDate();
 
-    return `${year}-${month}-${day}`;
-  };
-
-  const fetchTodaysQuote = useCallback(async ({ isRefresh = false } = {}) => {
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-
-    setError(null);
-
-    try {
-      const today = getTodayDate();
-      const quoteRef = ref(database, `motivational_texts/${today}`);
-      const snapshot = await get(quoteRef);
-
-      if (snapshot.exists()) {
-        setQuote({
-          id: today,
-          ...snapshot.val(),
-        });
+  const fetchQuoteForDate = useCallback(
+    async (dateKey, { isRefresh = false } = {}) => {
+      if (isRefresh) {
+        setRefreshing(true);
       } else {
+        setLoading(true);
+      }
+
+      setError(null);
+
+      try {
+        const quoteRef = ref(database, `motivational_texts/${dateKey}`);
+        const snapshot = await get(quoteRef);
+
+        if (snapshot.exists()) {
+          setQuote({
+            id: dateKey,
+            ...snapshot.val(),
+          });
+        } else {
+          setQuote(null);
+          setError('Brak treści na ten dzień. Wróć później.');
+        }
+      } catch (err) {
+        console.error('Błąd pobierania cytatu:', err);
+
         setQuote(null);
-        setError('Brak treści na dzisiejszy dzień. Wróć później.');
-      }
-    } catch (err) {
-      console.error('Błąd pobierania cytatu:', err);
 
-      setQuote(null);
-
-      if (err?.code === 'PERMISSION_DENIED') {
-        setError('Brak dostępu do treści. Sprawdź reguły Firebase.');
-      } else {
-        setError(
-          'Nie udało się pobrać dzisiejszej treści. Sprawdź połączenie i spróbuj ponownie.'
-        );
+        if (err?.code === 'PERMISSION_DENIED') {
+          setError('Brak dostępu do treści. Sprawdź reguły Firebase.');
+        } else {
+          setError(
+            'Nie udało się pobrać dzisiejszej treści. Sprawdź połączenie i spróbuj ponownie.'
+          );
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
-    fetchTodaysQuote();
-  }, [fetchTodaysQuote]);
+    fetchQuoteForDate(activeDateKey);
+  }, [activeDateKey, fetchQuoteForDate]);
 
   const isPremiumActive =
     user?.subscription?.status === 'active' ||
@@ -231,7 +229,7 @@ export default function HomeScreen() {
         <Text style={styles.errorText}>{error}</Text>
 
         <Pressable
-          onPress={() => fetchTodaysQuote()}
+          onPress={() => fetchQuoteForDate(activeDateKey)}
           style={({ pressed }) => [
             styles.retryButton,
             pressed && styles.buttonPressed,
@@ -271,7 +269,7 @@ export default function HomeScreen() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => fetchTodaysQuote({ isRefresh: true })}
+            onRefresh={() => fetchQuoteForDate(activeDateKey, { isRefresh: true })}
             colors={[COLORS.coral]}
             tintColor={COLORS.coral}
             progressBackgroundColor={COLORS.white}
@@ -289,7 +287,7 @@ export default function HomeScreen() {
             </View>
 
             <View>
-              <Text style={styles.brandName}>POMAGAM</Text>
+              <Text style={styles.brandName}>POMAGAMY</Text>
               <Text style={styles.brandTagline}>JESTEŚ WAŻNY</Text>
             </View>
           </View>
@@ -476,6 +474,27 @@ export default function HomeScreen() {
                   'Brak dodatkowej treści premium dla dzisiejszego cytatu.'}
               </Text>
 
+              {quote.takeaway ? (
+                <View style={styles.takeawayBox}>
+                  <MaterialCommunityIcons
+                    name="bag-personal-outline"
+                    size={22}
+                    color={COLORS.blue}
+                    style={styles.takeawayIcon}
+                  />
+
+                  <View style={styles.takeawayTextWrap}>
+                    <Text style={styles.takeawayLabel}>
+                      MYŚL, KTÓRĄ ZABIERASZ ZE SOBĄ
+                    </Text>
+
+                    <Text style={styles.takeawayText}>
+                      {quote.takeaway}
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+
               {quote.question ? (
                 <View style={styles.reflectionBox}>
                   <MaterialCommunityIcons
@@ -551,7 +570,7 @@ export default function HomeScreen() {
         </Pressable>
 
         <Text style={styles.dateInfo}>
-          Dzisiaj, {quote.publishDate || getTodayDate()}
+          Dzisiaj, {quote.publishDate || activeDateKey}
         </Text>
       </ScrollView>
 
@@ -1174,6 +1193,38 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 15,
     lineHeight: 23,
+  },
+
+  takeawayBox: {
+    flexDirection: 'row',
+    marginTop: 15,
+    borderRadius: 14,
+    backgroundColor: COLORS.blueSoft,
+    padding: 13,
+  },
+
+  takeawayIcon: {
+    marginTop: 1,
+    marginRight: 10,
+  },
+
+  takeawayTextWrap: {
+    flex: 1,
+  },
+
+  takeawayLabel: {
+    color: COLORS.blue,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+  },
+
+  takeawayText: {
+    marginTop: 4,
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 20,
   },
 
   reflectionBox: {
