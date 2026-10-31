@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f6f7f4" />
+  <title>Panel administracyjny — Teksty dla Marcina</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d2925;
+      --muted: #78827d;
+      --line: #e8ece8;
+      --paper: #fff;
+      --canvas: #f6f7f4;
+      --green: #2f765c;
+      --green-soft: #e9f4ed;
+      --red: #c85e58;
+      --red-soft: #fbefed;
+      --gold: #d7ad62;
+      --sidebar: #20342e;
+      --shadow: 0 14px 36px rgba(27, 46, 38, .06);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--ink); min-width: 320px; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { display: flex; min-height: 100vh; }
+    .sidebar { width: 248px; flex: 0 0 248px; min-height: 100vh; padding: 27px 18px; background: var(--sidebar); color: #fff; display: flex; flex-direction: column; }
+    .brand { display: flex; gap: 12px; align-items: center; padding: 0 8px 34px; }
+    .brand-mark { width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center; color: #20342e; background: #e6c782; font-size: 19px; font-weight: 800; }
+    .brand-name { font-weight: 750; letter-spacing: -.03em; font-size: 15px; }
+    .brand-caption { color: #a8b8b0; font-size: 11px; margin-top: 3px; }
+    .nav-label { color: #94a69d; text-transform: uppercase; letter-spacing: .12em; font-size: 10px; font-weight: 750; padding: 0 11px 10px; }
+    .nav-item { width: 100%; color: #d5e0da; border: 0; background: transparent; padding: 11px 12px; border-radius: 10px; text-align: left; display: flex; gap: 11px; align-items: center; font-size: 13px; margin-bottom: 4px; }
+    .nav-item.active { background: rgba(255,255,255,.12); color: white; font-weight: 650; }
+    .nav-icon { width: 19px; text-align: center; font-size: 16px; }
+    .sidebar-bottom { margin-top: auto; }
+    .profile { border-top: 1px solid rgba(255,255,255,.13); padding: 20px 8px 0; display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #34594b; color: #f3d996; font-size: 13px; font-weight: 700; }
+    .profile-name { font-size: 12px; font-weight: 650; }
+    .profile-role { color: #a8b8b0; font-size: 10px; margin-top: 3px; }
+    main { flex: 1; min-width: 0; max-width: 1600px; padding: 34px clamp(20px, 4vw, 58px) 60px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 30px; }
+    .eyebrow { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; font-weight: 750; }
+    h1 { font-size: clamp(25px, 3vw, 34px); letter-spacing: -.045em; margin: 7px 0 5px; }
+    .subtitle { color: var(--muted); font-size: 13px; margin: 0; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .connection-pill { border: 1px solid var(--line); background: white; border-radius: 999px; padding: 9px 13px; display: flex; align-items: center; gap: 8px; color: #55615b; font-size: 11px; white-space: nowrap; }
+    .connection-dot { width: 8px; height: 8px; border-radius: 50%; background: #aeb8b2; }
+    .connection-pill.online .connection-dot { background: #49a878; box-shadow: 0 0 0 3px #e6f4eb; }
+    .connection-pill.error .connection-dot { background: var(--red); }
+    .button { border: 1px solid transparent; border-radius: 9px; padding: 10px 15px; display: inline-flex; gap: 8px; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; transition: .16s ease; }
+    .button:hover { transform: translateY(-1px); }
+    .button-primary { background: var(--green); color: white; box-shadow: 0 5px 12px rgba(47,118,92,.14); }
+    .button-primary:hover { background: #255f49; }
+    .button-light { background: white; color: #48564e; border-color: var(--line); }
+    .button-light:hover { border-color: #bac9bf; }
+    .button-danger { color: #a94e49; background: var(--red-soft); }
+    .button-small { padding: 7px 10px; font-size: 11px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(340px, .88fr); gap: 22px; align-items: start; }
+    .stack { display: grid; gap: 22px; }
+    .card { background: var(--paper); border: 1px solid #edf0ed; border-radius: 15px; box-shadow: var(--shadow); }
+    .card-header { padding: 20px 22px 15px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+    .card-title { font-size: 15px; font-weight: 750; letter-spacing: -.02em; margin: 0; }
+    .card-description { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 5px 0 0; }
+    .calendar-card { padding-bottom: 18px; }
+    .calendar-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 1px 22px 15px; }
+    .month-title { font-size: 15px; font-weight: 750; text-transform: capitalize; min-width: 130px; text-align: center; }
+    .month-nav { display: flex; gap: 6px; }
+    .icon-button { border: 1px solid var(--line); border-radius: 8px; background: white; color: #59665f; width: 32px; height: 32px; display: grid; place-items: center; font-size: 16px; }
+    .icon-button:hover { border-color: #bdc9c1; background: #f8faf8; }
+    .today-button { padding: 0 10px; width: auto; font-size: 11px; font-weight: 650; }
+    .weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin: 0 18px; }
+    .weekdays { margin-bottom: 8px; }
+    .weekday { text-align: center; color: #8b9690; font-size: 10px; font-weight: 700; padding: 5px 0; }
+    .day { min-height: 57px; border: 1px solid #edf0ed; background: #fbfcfb; border-radius: 9px; padding: 7px 6px 5px; text-align: left; position: relative; color: #3e4b45; transition: .15s ease; }
+    .day:hover { border-color: #a9c5b4; transform: translateY(-1px); }
+    .day-number { font-size: 12px; font-weight: 650; }
+    .day-status { display: flex; gap: 4px; align-items: center; margin-top: 8px; font-size: 8px; line-height: 1; letter-spacing: .02em; font-weight: 750; }
+    .day-status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .day.exists { background: var(--green-soft); border-color: #d9eade; color: var(--green); }
+    .day.missing { background: var(--red-soft); border-color: #f4e2df; color: var(--red); }
+    .day.outside { opacity: .43; }
+    .day.today { box-shadow: inset 0 0 0 1.5px #d2a84f; }
+    .day.selected { outline: 2px solid #447d61; outline-offset: 1px; z-index: 1; }
+    .calendar-legend { display: flex; gap: 16px; flex-wrap: wrap; padding: 15px 22px 0; color: var(--muted); font-size: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .legend-dot.green { background: #4a9b70; }
+    .legend-dot.red { background: #d16d65; }
+    .legend-outline { width: 10px; height: 10px; border: 1.5px solid #d2a84f; border-radius: 3px; }
+    .form-card { padding-bottom: 19px; }
+    .form-header { padding-bottom: 16px; border-bottom: 1px solid #f0f2f0; }
+    .form-body { padding: 18px 22px 0; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .field.full { grid-column: 1 / -1; }
+    label { color: #48564f; font-size: 10px; font-weight: 750; }
+    .required { color: #c65e58; }
+    input, textarea { width: 100%; border: 1px solid #e4e9e5; border-radius: 8px; background: #fff; color: var(--ink); padding: 10px 11px; outline: none; font-size: 11px; transition: border-color .15s, box-shadow .15s; }
+    input:focus, textarea:focus { border-color: #73a58a; box-shadow: 0 0 0 3px rgba(71,142,102,.1); }
+    input:disabled { background: #f5f7f5; color: #7c8781; }
+    textarea { min-height: 82px; resize: vertical; line-height: 1.55; }
+    textarea.large { min-height: 108px; }
+    .field-hint { color: #929b96; font-size: 9px; line-height: 1.45; }
+    .form-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 16px; }
+    .edit-banner { display: none; align-items: center; justify-content: space-between; background: #fff8e9; color: #866528; margin: 14px 22px 0; border-radius: 8px; padding: 9px 11px; font-size: 10px; font-weight: 650; }
+    .edit-banner.visible { display: flex; }
+    .list-card { grid-column: 1 / -1; }
+    .list-tools { display: flex; gap: 9px; align-items: center; }
+    .search { width: min(230px, 34vw); padding: 9px 11px; }
+    .count-badge { background: #edf4ef; color: var(--green); border-radius: 999px; padding: 6px 9px; font-size: 10px; font-weight: 750; white-space: nowrap; }
+    .quote-list { padding: 0 20px 20px; display: grid; gap: 10px; }
+    .quote-item { border: 1px solid #edf0ed; border-radius: 11px; padding: 12px; display: grid; grid-template-columns: 72px minmax(0,1fr) auto; gap: 13px; align-items: center; }
+    .quote-image { width: 72px; height: 62px; border-radius: 7px; background: linear-gradient(135deg,#e9efe9,#dce7dc); object-fit: cover; color: #7b8a80; font-size: 9px; display: grid; place-items: center; overflow: hidden; }
+    .quote-image img { width: 100%; height: 100%; object-fit: cover; }
+    .quote-date { color: #77827c; font-size: 9px; font-weight: 700; margin-bottom: 4px; }
+    .quote-title { font-size: 12px; font-weight: 750; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .quote-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+    .tag { background: #f2f5f2; border-radius: 99px; padding: 4px 7px; color: #68746d; font-size: 9px; }
+    .tag.good { background: #edf6ef; color: #3c815d; }
+    .quote-actions { display: flex; gap: 6px; }
+    .empty-state { text-align: center; padding: 36px 15px; color: var(--muted); font-size: 12px; }
+    .empty-icon { font-size: 26px; margin-bottom: 7px; }
+    .footer-note { color: #929b96; font-size: 10px; line-height: 1.55; padding: 15px 3px 0; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 10; max-width: min(420px, calc(100vw - 32px)); padding: 12px 16px; border-radius: 10px; background: #20342e; color: white; box-shadow: 0 12px 30px #15251f35; font-size: 12px; opacity: 0; transform: translateY(10px); pointer-events: none; transition: .22s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: #984b47; }
+    dialog { border: 0; padding: 0; border-radius: 14px; width: min(620px, calc(100vw - 28px)); max-height: 88vh; box-shadow: 0 24px 80px #12231d44; color: var(--ink); }
+    dialog::backdrop { background: rgba(22, 38, 31, .48); backdrop-filter: blur(3px); }
+    .dialog-head { display: flex; justify-content: space-between; align-items: center; padding: 17px 20px; border-bottom: 1px solid var(--line); }
+    .dialog-title { font-size: 14px; font-weight: 750; }
+    .dialog-body { padding: 20px; overflow: auto; max-height: calc(88vh - 60px); }
+    .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .config-note { color: #69756e; background: #f4f7f4; border-radius: 8px; font-size: 10px; line-height: 1.55; padding: 11px; margin: 0 0 16px; }
+    .config-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .preview-image { width: 100%; max-height: 250px; object-fit: cover; border-radius: 10px; margin-bottom: 15px; }
+    .preview-date { color: var(--muted); font-size: 11px; }
+    .preview-title { font-size: 21px; line-height: 1.3; letter-spacing: -.03em; margin: 7px 0 15px; }
+    .preview-section { margin: 15px 0; }
+    .preview-section h3 { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--green); margin: 0 0 6px; }
+    .preview-section p { font-size: 12px; white-space: pre-wrap; line-height: 1.65; margin: 0; color: #4d5a53; }
+    .loading-overlay { position: fixed; inset: 0; z-index: 20; background: rgba(246,247,244,.82); display: none; place-items: center; color: var(--green); font-size: 12px; font-weight: 700; backdrop-filter: blur(2px); }
+    .loading-overlay.show { display: grid; }
+    @media (max-width: 1060px) { .sidebar { width: 205px; flex-basis: 205px; } .layout { grid-template-columns: 1fr; } .list-card { grid-column: auto; } }
+    @media (max-width: 700px) { .app-shell { display: block; } .sidebar { width: 100%; min-height: auto; height: auto; padding: 12px 16px; flex-direction: row; align-items: center; justify-content: space-between; } .brand { padding: 0; } .nav-label, .sidebar-bottom, .nav-item:not(.active) { display: none; } .nav-item.active { width: auto; margin: 0; padding: 9px 11px; font-size: 11px; } .topbar { align-items: flex-start; flex-direction: column; margin-bottom: 22px; } .top-actions { width: 100%; justify-content: space-between; } main { padding: 24px 14px 40px; } .card-header { padding: 17px 16px 13px; } .calendar-head { padding: 0 16px 13px; } .weekdays, .calendar-grid { margin-left: 10px; margin-right: 10px; gap: 4px; } .day { min-height: 49px; padding: 6px 4px; } .day-status { font-size: 7px; margin-top: 7px; } .calendar-legend { padding-left: 16px; } .form-body { padding: 16px 16px 0; } .edit-banner { margin-left: 16px; margin-right: 16px; } .quote-list { padding: 0 12px 14px; } .quote-item { grid-template-columns: 52px minmax(0,1fr); gap: 9px; padding: 9px; } .quote-image { width: 52px; height: 52px; } .quote-actions { grid-column: 2; } .list-tools { flex-wrap: wrap; justify-content: flex-end; } .search { width: 100%; order: 2; } }
+    @media (max-width: 420px) { .form-grid, .config-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } .month-title { min-width: 110px; font-size: 13px; } .day { min-height: 43px; } .day-status { letter-spacing: 0; } .connection-pill { padding: 8px 10px; } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">✦</div><div><div class="brand-name">Codzienna myśl</div><div class="brand-caption">panel administracyjny</div></div></div>
+      <div>
+        <div class="nav-label">Menu</div>
+        <button class="nav-item active" type="button" onclick="document.querySelector('#calendarSection').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">▦</span> Teksty</button>
+      </div>
+      <div class="sidebar-bottom"><div class="profile"><div class="avatar">M</div><div><div class="profile-name">Dla Marcina</div><div class="profile-role">Administrator treści</div></div></div></div>
+    </aside>
+    <main>
+      <header class="topbar">
+        <div><div class="eyebrow">Biblioteka treści</div><h1>Panel administracyjny</h1><p class="subtitle">Zarządzaj tekstami, publikacją i codzienną inspiracją.</p></div>
+        <div class="top-actions"><div class="connection-pill" id="connectionPill"><span class="connection-dot"></span><span id="connectionLabel">Łączenie z Firebase…</span></div><button class="button button-light" type="button" id="settingsButton">⚙ Ustawienia Firebase</button></div>
+      </header>
+      <div class="layout">
+        <div class="stack">
+          <section class="card calendar-card" id="calendarSection">
+            <div class="card-header"><div><h2 class="card-title">Kalendarz publikacji</h2><p class="card-description">Wybierz dzień, aby sprawdzić lub dodać tekst.</p></div></div>
+            <div class="calendar-head"><div class="month-nav"><button class="icon-button" id="prevMonth" aria-label="Poprzedni miesiąc">‹</button></div><div class="month-title" id="monthTitle"></div><div class="month-nav"><button class="icon-button today-button" id="todayButton">Dzisiaj</button><button class="icon-button" id="nextMonth" aria-label="Następny miesiąc">›</button></div></div>
+            <div class="weekdays"><div class="weekday">Pon</div><div class="weekday">Wt</div><div class="weekday">Śr</div><div class="weekday">Czw</div><div class="weekday">Pt</div><div class="weekday">Sob</div><div class="weekday">Niedz</div></div>
+            <div class="calendar-grid" id="calendarGrid" aria-label="Kalendarz"></div>
+            <div class="calendar-legend"><span class="legend-item"><span class="legend-dot green"></span> Wpis istnieje</span><span class="legend-item"><span class="legend-dot red"></span> Brak wpisu</span><span class="legend-item"><span class="legend-outline"></span> Dzisiaj</span></div>
+          </section>
+          <section class="card form-card" id="editorSection">
+            <div class="card-header form-header"><div><h2 class="card-title" id="formHeading">Dodaj nowy tekst</h2><p class="card-description">Data publikacji jest równocześnie ID wpisu w bazie.</p></div></div>
+            <div class="edit-banner" id="editBanner"><span id="editBannerText">Edytujesz tekst</span><button class="button button-small button-light" id="cancelEdit" type="button">Zakończ edycję</button></div>
+            <form id="quoteForm" class="form-body">
+              <div class="form-grid">
+                <div class="field"><label for="publishDate">Data publikacji <span class="required">*</span></label><input id="publishDate" name="publishDate" type="date" required /><span class="field-hint">Ta data będzie kluczem, np. 2026-10-31.</span></div>
+                <div class="field"><label for="recordId">ID w bazie</label><input id="recordId" type="text" value="—" disabled /><span class="field-hint">ID aktualizuje się razem z datą.</span></div>
+                <div class="field full"><label for="title">Tytuł <span class="required">*</span></label><input id="title" name="title" type="text" placeholder="Wpisz tytuł albo cytat" required /></div>
+                <div class="field full"><label for="imageUrl">Link do obrazka</label><input id="imageUrl" name="imageUrl" type="url" placeholder="https://…" /></div>
+                <div class="field full"><label for="content">Treść darmowa</label><textarea class="large" id="content" name="content" placeholder="Tekst widoczny dla wszystkich użytkowników…"></textarea></div>
+                <div class="field full"><label for="contentPremium">Treść premium</label><textarea class="large" id="contentPremium" name="content_premium" placeholder="Rozszerzona treść dla użytkowników premium…"></textarea></div>
+                <div class="field full"><label for="summarize">Podsumowanie / wniosek dnia</label><textarea id="summarize" name="summarize" placeholder="Najważniejsza myśl dnia…"></textarea></div>
+                <div class="field full"><label for="question">Pytanie do refleksji</label><textarea id="question" name="question" placeholder="Pytanie, które zachęci do refleksji…"></textarea></div>
+                <div class="field full"><label for="takeaway">Myśl którą zabierasz ze sobą</label><textarea id="takeaway" name="takeaway" placeholder="Jedno zdanie do zapamiętania…"></textarea></div>
+              </div>
+              <div class="form-actions"><button class="button button-light" type="reset" id="clearForm">Wyczyść formularz</button><button class="button button-primary" type="submit" id="saveButton">Zapisz tekst</button></div>
+            </form>
+          </section>
+        </div>
+        <section class="card list-card" id="allTextsSection">
+          <div class="card-header"><div><h2 class="card-title">Wszystkie teksty</h2><p class="card-description">Przeglądaj, podglądaj i zarządzaj opublikowanymi wpisami.</p></div><div class="list-tools"><span class="count-badge" id="quoteCount">Łącznie wpisów: 0</span><input class="search" id="searchInput" type="search" placeholder="Szukaj tekstu…" aria-label="Szukaj tekstu" /></div></div>
+          <div class="quote-list" id="quoteList"><div class="empty-state"><div class="empty-icon">✦</div>Ładowanie tekstów z Firebase…</div></div>
+        </section>
+      </div>
+      <p class="footer-note">Panel korzysta wyłącznie ze ścieżki <strong>motivational_texts</strong>. Dostęp do odczytu i zapisu określają reguły Realtime Database Firebase — nie udostępniaj bazy publicznie do zapisu. Klucz Firebase w aplikacji klienckiej nie jest hasłem ani uprawnieniem administratora.</p>
+    </main>
+  </div>
+  <dialog id="configDialog">
+    <div class="dialog-head"><div class="dialog-title">Połączenie z Firebase</div><button class="icon-button" type="button" data-close="configDialog" aria-label="Zamknij">×</button></div>
+    <div class="dialog-body">
+      <p class="config-note">Ustawienia są zapisywane lokalnie w tej przeglądarce. Firebase Web API key jest identyfikatorem projektu, a nie sekretem. Zabezpiecz dostęp regułami Realtime Database i ogranicz dostęp do zaufanych użytkowników.</p>
+      <form id="configForm"><div class="config-grid">
+        <div class="field full"><label for="cfgDatabaseURL">Realtime Database URL</label><input id="cfgDatabaseURL" name="databaseURL" type="url" required /></div>
+        <div class="field"><label for="cfgApiKey">API key</label><input id="cfgApiKey" name="apiKey" required /></div>
+        <div class="field"><label for="cfgAuthDomain">Auth domain</label><input id="cfgAuthDomain" name="authDomain" /></div>
+        <div class="field"><label for="cfgProjectId">Project ID</label><input id="cfgProjectId" name="projectId" /></div>
+        <div class="field"><label for="cfgStorageBucket">Storage bucket</label><input id="cfgStorageBucket" name="storageBucket" /></div>
+        <div class="field"><label for="cfgMessagingSenderId">Messaging sender ID</label><input id="cfgMessagingSenderId" name="messagingSenderId" /></div>
+        <div class="field"><label for="cfgAppId">App ID</label><input id="cfgAppId" name="appId" /></div>
+        <div class="field full"><label for="cfgMeasurementId">Measurement ID (opcjonalnie)</label><input id="cfgMeasurementId" name="measurementId" /></div>
+      </div><div class="config-actions"><button class="button button-primary" type="submit">Zapisz i połącz</button><button class="button button-light" type="button" id="reconnectButton">Połącz ponownie</button></div></form>
+    </div>
+  </dialog>
+  <dialog id="previewDialog"><div class="dialog-head"><div class="dialog-title">Podgląd tekstu</div><button class="icon-button" type="button" data-close="previewDialog" aria-label="Zamknij">×</button></div><div class="dialog-body" id="previewBody"></div></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="loading-overlay" id="loadingOverlay">Zapisywanie zmian…</div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script>
+
+    const DEFAULT_CONFIG = {
+      apiKey: 'AIzaSyDFSgDII4Y1_z4OXuFzuHe12rB0t2puKsY',
+      authDomain: 'przetargi-c7080.firebaseapp.com',
+      databaseURL: 'https://przetargi-c7080-default-rtdb.europe-west1.firebasedatabase.app',
+      projectId: 'przetargi-c7080',
+      storageBucket: 'przetargi-c7080.firebasestorage.app',
+      messagingSenderId: '41621053378',
+      appId: '1:41621053378:web:da936492c97d1f80a4805b',
+      measurementId: 'G-25GP833V95'
+    };
+    const CONFIG_KEY = 'daily-thoughts-firebase-config';
+    const $ = (selector) => document.querySelector(selector);
+    const form = $('#quoteForm');
+    const monthTitle = $('#monthTitle');
+    const calendarGrid = $('#calendarGrid');
+    const quoteList = $('#quoteList');
+    const quoteForm = $('#quoteForm');
+    let db = null;
+    let unsubscribe = null;
+    let entries = {};
+    let visibleMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    let selectedDate = dateKey(new Date());
+    let editingId = null;
+    let toastTimer;
+
+    function dateKey(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+    function configFromStorage() {
+      try { return { ...DEFAULT_CONFIG, ...JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}') }; }
+      catch { return { ...DEFAULT_CONFIG }; }
+    }
+    function setConnection(state, label) {
+      const pill = $('#connectionPill');
+      pill.classList.toggle('online', state === 'online');
+      pill.classList.toggle('error', state === 'error');
+      $('#connectionLabel').textContent = label;
+    }
+    function toast(message, error = false) {
+      const element = $('#toast');
+      element.textContent = message;
+      element.classList.toggle('error', error);
+      element.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => element.classList.remove('show'), 3600);
+    }
+    function showLoading(show) { $('#loadingOverlay').classList.toggle('show', show); }
+    function safeHttpUrl(value) {
+      if (!value) return '';
+      try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; }
+      catch { return ''; }
+    }
+    function friendlyError(error) {
+      const code = error?.code || '';
+      if (code.includes('PERMISSION_DENIED') || code.includes('permission-denied')) return 'Firebase odmówił dostępu. Sprawdź reguły Realtime Database i uprawnienia.';
+      if (code.includes('NETWORK') || !navigator.onLine) return 'Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.';
+      return error?.message || 'Wystąpił nieznany błąd Firebase.';
+    }
+    function connect(config = configFromStorage()) {
+      if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+      entries = {};
+      renderCalendar();
+      renderList();
+      setConnection('pending', 'Łączenie z Firebase…');
+      try {
+        const appName = 'quotes-admin-' + Math.random().toString(36).slice(2, 9);
+        const app = firebase.initializeApp(config, appName);
+        db = firebase.database(app);
+        const quotesRef = db.ref('motivational_texts');
+        const onQuotesChanged = (snapshot) => {
+          entries = snapshot.exists() ? snapshot.val() || {} : {};
+          setConnection('online', 'Połączono z Firebase');
+          renderCalendar();
+          renderList();
+        };
+        const onQuotesError = (error) => {
+          setConnection('error', 'Brak dostępu do bazy');
+          quoteList.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div>${escapeHtml(friendlyError(error))}</div>`;
+          toast(friendlyError(error), true);
+        };
+        quotesRef.on('value', onQuotesChanged, onQuotesError);
+        unsubscribe = () => quotesRef.off('value', onQuotesChanged);
+      } catch (error) {
+        setConnection('error', 'Błąd konfiguracji');
+        toast(friendlyError(error), true);
+      }
+    }
+    function escapeHtml(value = '') {
+      return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    }
+    function renderCalendar() {
+      const year = visibleMonth.getFullYear();
+      const month = visibleMonth.getMonth();
+      monthTitle.textContent = new Intl.DateTimeFormat('pl-PL', { month: 'long', year: 'numeric' }).format(visibleMonth);
+      const firstDay = new Date(year, month, 1);
+      const mondayOffset = (firstDay.getDay() + 6) % 7;
+      const gridStart = new Date(year, month, 1 - mondayOffset);
+      const today = dateKey(new Date());
+      calendarGrid.replaceChildren();
+      for (let index = 0; index < 42; index++) {
+        const date = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + index);
+        const key = dateKey(date);
+        const exists = Boolean(entries[key]);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `day ${exists ? 'exists' : 'missing'} ${date.getMonth() !== month ? 'outside' : ''} ${key === today ? 'today' : ''} ${key === selectedDate ? 'selected' : ''}`;
+        button.setAttribute('aria-label', `${key}, ${exists ? 'wpis istnieje' : 'brak wpisu'}${key === today ? ', dzisiaj' : ''}`);
+        button.innerHTML = `<span class="day-number">${date.getDate()}</span><span class="day-status">${exists ? 'JEST' : 'NIE MA'}</span>`;
+        button.addEventListener('click', () => selectDate(key));
+        calendarGrid.append(button);
+      }
+    }
+    function selectDate(key) {
+      selectedDate = key;
+      $('#publishDate').value = key;
+      $('#recordId').value = key;
+      renderCalendar();
+      if (entries[key]) {
+        startEdit(key);
+      } else if (editingId) {
+        resetEditor(false);
+        $('#publishDate').value = key;
+        $('#recordId').value = key;
+      }
+      if (window.innerWidth < 1060) $('#editorSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    function renderList() {
+      const sorted = Object.entries(entries).map(([id, value]) => ({ id, ...(value || {}) })).sort((a, b) => b.id.localeCompare(a.id));
+      $('#quoteCount').textContent = `Łącznie wpisów: ${sorted.length}`;
+      const needle = $('#searchInput').value.trim().toLocaleLowerCase('pl');
+      const filtered = sorted.filter((item) => `${item.id} ${item.title || ''} ${item.content || ''}`.toLocaleLowerCase('pl').includes(needle));
+      if (!filtered.length) {
+        quoteList.innerHTML = `<div class="empty-state"><div class="empty-icon">${sorted.length ? '⌕' : '✦'}</div>${sorted.length ? 'Nie znaleziono tekstów pasujących do wyszukiwania.' : 'Nie ma jeszcze tekstów. Dodaj pierwszy wpis w formularzu.'}</div>`;
+        return;
+      }
+      quoteList.innerHTML = '';
+      for (const item of filtered) {
+        const article = document.createElement('article');
+        article.className = 'quote-item';
+        const imageUrl = safeHttpUrl(item.imageUrl);
+        const image = document.createElement('div');
+        image.className = 'quote-image';
+        if (imageUrl) {
+          const img = document.createElement('img');
+          img.src = imageUrl;
+          img.alt = '';
+          img.loading = 'lazy';
+          img.onerror = () => { image.textContent = 'Brak obrazka'; };
+          image.append(img);
+        } else image.textContent = 'Brak obrazka';
+        const content = document.createElement('div');
+        content.innerHTML = `<div class="quote-date">${escapeHtml(item.publishDate || item.id)}</div><h3 class="quote-title">${escapeHtml(item.title || 'Bez tytułu')}</h3><div class="quote-meta"><span class="tag ${item.content ? 'good' : ''}">Darmowy: ${item.content ? 'tak' : 'nie'}</span><span class="tag ${item.content_premium ? 'good' : ''}">Premium: ${item.content_premium ? 'tak' : 'nie'}</span><span class="tag">Myśl: ${item.takeaway ? 'tak' : 'brak'}</span></div>`;
+        const actions = document.createElement('div');
+        actions.className = 'quote-actions';
+        actions.innerHTML = `<button type="button" class="button button-light button-small" data-action="preview">Podgląd</button><button type="button" class="button button-light button-small" data-action="edit">Edytuj</button><button type="button" class="button button-danger button-small" data-action="delete">Usuń</button>`;
+        actions.addEventListener('click', (event) => {
+          const action = event.target.closest('[data-action]')?.dataset.action;
+          if (action === 'preview') preview(item);
+          if (action === 'edit') startEdit(item.id);
+          if (action === 'delete') deleteEntry(item.id);
+        });
+        article.append(image, content, actions);
+        quoteList.append(article);
+      }
+    }
+    function startEdit(id) {
+      const item = entries[id];
+      if (!item) return;
+      editingId = id;
+      selectedDate = id;
+      $('#formHeading').textContent = 'Edytuj tekst';
+      $('#editBannerText').textContent = `Edytujesz wpis z dnia ${id}`;
+      $('#editBanner').classList.add('visible');
+      $('#saveButton').textContent = 'Zapisz zmiany';
+      $('#publishDate').value = item.publishDate || id;
+      $('#recordId').value = id;
+      $('#title').value = item.title || '';
+      $('#imageUrl').value = item.imageUrl || '';
+      $('#content').value = item.content || '';
+      $('#contentPremium').value = item.content_premium || '';
+      $('#summarize').value = item.summarize || '';
+      $('#question').value = item.question || '';
+      $('#takeaway').value = item.takeaway || '';
+      renderCalendar();
+      $('#editorSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    function resetEditor(setToday = true) {
+      editingId = null;
+      form.reset();
+      $('#formHeading').textContent = 'Dodaj nowy tekst';
+      $('#editBanner').classList.remove('visible');
+      $('#saveButton').textContent = 'Zapisz tekst';
+      if (setToday) selectedDate = dateKey(new Date());
+      $('#publishDate').value = setToday ? selectedDate : (selectedDate || dateKey(new Date()));
+      $('#recordId').value = $('#publishDate').value;
+      renderCalendar();
+    }
+    function preview(item) {
+      const body = $('#previewBody');
+      body.replaceChildren();
+      const imageUrl = safeHttpUrl(item.imageUrl);
+      if (imageUrl) {
+        const image = document.createElement('img');
+        image.className = 'preview-image'; image.src = imageUrl; image.alt = '';
+        body.append(image);
+      }
+      const date = document.createElement('div'); date.className = 'preview-date'; date.textContent = item.publishDate || item.id; body.append(date);
+      const title = document.createElement('h2'); title.className = 'preview-title'; title.textContent = item.title || 'Bez tytułu'; body.append(title);
+      const sections = [['Treść darmowa', item.content], ['Treść premium', item.content_premium], ['Podsumowanie / wniosek dnia', item.summarize], ['Pytanie do refleksji', item.question], ['Myśl którą zabierasz ze sobą', item.takeaway]];
+      for (const [heading, text] of sections) {
+        if (!text) continue;
+        const section = document.createElement('section'); section.className = 'preview-section';
+        const h3 = document.createElement('h3'); h3.textContent = heading;
+        const p = document.createElement('p'); p.textContent = text;
+        section.append(h3, p); body.append(section);
+      }
+      $('#previewDialog').showModal();
+    }
+    async function deleteEntry(id) {
+      if (!db) return toast('Najpierw połącz się z Firebase.', true);
+      if (!window.confirm(`Czy na pewno usunąć tekst z dnia ${id}? Tej operacji nie można cofnąć.`)) return;
+      try {
+        showLoading(true);
+        await db.ref(`motivational_texts/${id}`).remove();
+        if (editingId === id) resetEditor();
+        toast(`Usunięto tekst z dnia ${id}.`);
+      } catch (error) { toast(friendlyError(error), true); }
+      finally { showLoading(false); }
+    }
+    function fillConfigForm() {
+      const config = configFromStorage();
+      for (const [key, value] of Object.entries(config)) {
+        const input = document.querySelector(`[name="${key}"]`);
+        if (input) input.value = value || '';
+      }
+    }
+
+    $('#prevMonth').addEventListener('click', () => { visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1); renderCalendar(); });
+    $('#nextMonth').addEventListener('click', () => { visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1); renderCalendar(); });
+    $('#todayButton').addEventListener('click', () => { const today = new Date(); visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1); selectDate(dateKey(today)); });
+    $('#publishDate').addEventListener('change', (event) => { selectedDate = event.target.value; $('#recordId').value = selectedDate; renderCalendar(); });
+    $('#searchInput').addEventListener('input', renderList);
+    $('#clearForm').addEventListener('click', () => setTimeout(() => resetEditor(), 0));
+    $('#cancelEdit').addEventListener('click', () => resetEditor());
+    $('#settingsButton').addEventListener('click', () => { fillConfigForm(); $('#configDialog').showModal(); });
+    document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => document.getElementById(button.dataset.close).close()));
+    for (const dialog of document.querySelectorAll('dialog')) dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+    $('#reconnectButton').addEventListener('click', () => connect(configFromStorage()));
+    $('#configForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const config = Object.fromEntries(new FormData(event.currentTarget).entries());
+      for (const key of Object.keys(config)) config[key] = config[key].trim();
+      try { localStorage.setItem(CONFIG_KEY, JSON.stringify(config)); }
+      catch { toast('Nie można zapisać ustawień w tej przeglądarce.', true); return; }
+      $('#configDialog').close(); connect(config);
+    });
+    quoteForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!db) return toast('Brak połączenia z Firebase. Otwórz ustawienia i połącz bazę.', true);
+      const data = Object.fromEntries(new FormData(quoteForm).entries());
+      const id = data.publishDate;
+      if (!id || !/^\d{4}-\d{2}-\d{2}$/.test(id)) return toast('Wybierz prawidłową datę publikacji.', true);
+      if (!data.title.trim()) return toast('Tytuł jest wymagany.', true);
+      if (data.imageUrl && !safeHttpUrl(data.imageUrl)) return toast('Link do obrazka musi zaczynać się od http:// lub https://.', true);
+      const targetId = id;
+      const current = entries[targetId];
+      const isMoving = editingId && editingId !== targetId;
+      if (!editingId && current) return toast('Na tę datę istnieje już wpis. Wybierz inny dzień albo edytuj istniejący tekst.', true);
+      if (isMoving && current && !window.confirm(`W dniu ${targetId} istnieje już tekst. Zastąpić go?`)) return;
+      const now = new Date().toISOString();
+      const record = {
+        title: data.title.trim(),
+        publishDate: targetId,
+        content: data.content.trim(),
+        content_premium: data.content_premium.trim(),
+        summarize: data.summarize.trim(),
+        question: data.question.trim(),
+        takeaway: data.takeaway.trim(),
+        imageUrl: data.imageUrl.trim(),
+        createdAt: current?.createdAt || (editingId ? entries[editingId]?.createdAt : null) || now,
+        updatedAt: now
+      };
+      try {
+        showLoading(true);
+        await db.ref(`motivational_texts/${targetId}`).set(record);
+        if (isMoving) await db.ref(`motivational_texts/${editingId}`).remove();
+        toast(editingId ? 'Zapisano zmiany tekstu.' : 'Dodano nowy tekst.');
+        selectedDate = targetId;
+        resetEditor(false);
+        selectedDate = targetId;
+        $('#publishDate').value = targetId;
+        $('#recordId').value = targetId;
+        renderCalendar();
+      } catch (error) { toast(friendlyError(error), true); }
+      finally { showLoading(false); }
+    });
+    $('#publishDate').value = selectedDate;
+    $('#recordId').value = selectedDate;
+    fillConfigForm();
+    renderCalendar();
+    renderList();
+    connect();
+  </script>
+</body>
+</html>
